@@ -11,3 +11,9 @@
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
+
+# Documentation
+*.odt
+
+# Locked files
+*.~lock*
