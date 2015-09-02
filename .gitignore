@@ -17,3 +17,8 @@ vignettes/*.pdf
 
 # Locked files
 *.~lock*
+.Rproj.user
+packrat/lib*/
+
+# Data files
+data/
