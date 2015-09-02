@@ -73,24 +73,24 @@ shinyServer(
         tempData
     })
 
-    activeFilteredData = reactive({
-        # This returns activeData() filtered by metadata (FactorAge, Sex, Background, etc.)
-        # metadata levels are populated from activeData() which is why this separate activeFilteredData() is needed
+    # activeFilteredData = reactive({
+    #     # This returns activeData() filtered by metadata (FactorAge, Sex, Background, etc.)
+    #     # metadata levels are populated from activeData() which is why this separate activeFilteredData() is needed
 
-        tempData = activeData()
+    #     tempData = activeData()
 
-        # if FactorAge is a column, filter by the stuff selected here
-        if (!is.null(input$ageGroups)) {
-            if (!is.null(tempData$FactorAge)) {
-                tempData = subset(tempData, FactorAge %in% input$ageGroups)
-            }
-        }
+    #     # if FactorAge is a column, filter by the stuff selected here
+    #     if (!is.null(input$ageGroups)) {
+    #         if (!is.null(tempData$FactorAge)) {
+    #             tempData = subset(tempData, FactorAge %in% input$ageGroups)
+    #         }
+    #     }
 
-        tempData
-    })
+    #     tempData
+    # })
 
     strainDataSource1 = reactive({
-        strainDataSource1 = activeFilteredData()
+        strainDataSource1 = activeData()
 
         if (!is.null(input$selectStrains1)) {
             strainDataSource1 = subset(strainDataSource1, Strain %in% input$selectStrains1)
@@ -99,7 +99,7 @@ shinyServer(
         strainDataSource1
     })
     strainDataSource2 = reactive({
-        strainDataSource2 = activeFilteredData()
+        strainDataSource2 = activeData()
 
         if (!is.null(input$selectStrains2)) {
             strainDataSource2 = subset(strainDataSource2, Strain %in% input$selectStrains2)
@@ -149,11 +149,14 @@ shinyServer(
     summaryTable = reactive({
 
         # Check if Treatment field exists in the data sources
-        if ("Treatment" %in% colnames(activeFilteredData())) {
-            # Use treatmentDataSources
-            summaryTable = StatsSummaryTable(treatmentDataSource1(), treatmentDataSource2())
-        } else {
-            summaryTable = StatsSummaryTable(genotypeDataSource1(), genotypeDataSource2())
+        # if ("Treatment" %in% colnames(activeFilteredData())) {
+        #     # Use treatmentDataSources
+        #     summaryTable = StatsSummaryTable(treatmentDataSource1(), treatmentDataSource2())
+        # } else {
+        #     summaryTable = StatsSummaryTable(genotypeDataSource1(), genotypeDataSource2())
+        # }
+        if (!is.null(finalFilteredDataSource1()) && !is.null(finalFilteredDataSource2())) {
+            summaryTable = StatsSummaryTable(finalFilteredDataSource1(), finalFilteredDataSource2())
         }
 
         summaryTable
@@ -162,14 +165,72 @@ shinyServer(
     finalDataSource1 = reactive({
         data = activeData()
         if (!is.null(input$selectStrains1)) {
-            data = subset(data, Strain %in% input$selectStrains1)
+            # data = subset(data, Strain %in% input$selectStrains1)
+            data = strainDataSource1()
             if (!is.null(input$selectGenotypes1)) {
-                data = subset(data, Genotype %in% input$selectGenotypes1)
+                # data = subset(data, Genotype %in% input$selectGenotypes1)
+                data = genotypeDataSource1()
                 if (!is.null(input$selectTreatments1)) {
-                    data = subset(data, Genotype %in% input$selectTreatments1)
+                    # data = subset(data, Treatment %in% input$selectTreatments1)
+                    data = treatmentDataSource1()
                 }
             }
         }
+
+        data$Group = 'Group 1'
+        data
+    })
+
+    finalDataSource2 = reactive({
+        data = activeData()
+        if (!is.null(input$selectStrains2)) {
+            # data = subset(data, Strain %in% input$selectStrains2)
+            data = strainDataSource2()
+            if (!is.null(input$selectGenotypes2)) {
+                # data = subset(data, Genotype %in% input$selectGenotypes2)
+                data = genotypeDataSource2()
+                if (!is.null(input$selectTreatments2)) {
+                    # data = subset(data, Treatment %in% input$selectTreatments2)
+                    data = treatmentDataSource2()
+                }
+            }
+        }
+
+        data$Group = 'Group 2'
+        data
+    })
+
+    finalFilteredDataSource1 = reactive({
+        # Filter finalDataSource1 by available metadata
+        data = finalDataSource1()
+
+        if (!is.null(input$ageGroups)) {
+            data = filter(data, FactorAge %in% input$ageGroups)
+        }
+        if (!is.null(input$sexGroups)) {
+            data = filter(data, Sex %in% input$sexGroups)
+        }
+        if (!is.null(input$backgroundGroups)) {
+            data = filter(data, Background %in% input$backgroundGroups)
+        }
+
+        data
+    })
+
+    finalFilteredDataSource2 = reactive({
+        # Filter finalDataSource2 by available metadata
+        data = finalDataSource2()
+
+        if (!is.null(input$ageGroups)) {
+            data = filter(data, FactorAge %in% input$ageGroups)
+        }
+        if (!is.null(input$sexGroups)) {
+            data = filter(data, Sex %in% input$sexGroups)
+        }
+        if (!is.null(input$backgroundGroups)) {
+            data = filter(data, Background %in% input$backgroundGroups)
+        }
+
         data
     })
 
@@ -246,35 +307,85 @@ shinyServer(
     })
 
     output$ageGroups = renderUI({
-        if ("FactorAge" %in% colnames(activeData())) {
+
+        data = rbind.fill(finalDataSource1(), finalDataSource2())
+
+        if ("FactorAge" %in% colnames(data)) {
             column(4,
                 checkboxGroupInput(inputId = 'ageGroups', 
-                                   label = h4('Ages'), 
-                                   choices = as.character(unique(activeData()$FactorAge)),
-                                   selected = as.character(unique(activeData()$FactorAge)))
+                                   label = h4('Ages:'), 
+                                   choices = as.character(unique(data$FactorAge)),
+                                   selected = as.character(unique(data$FactorAge)))
             )
         }
     })
 
     output$sexGroups = renderUI({
-        if ("Sex" %in% colnames(activeData())) {
+
+        data = rbind.fill(finalDataSource1(), finalDataSource2())
+
+        if ("Sex" %in% colnames(data)) {
             column(4,
                 checkboxGroupInput(inputId = 'sexGroups', 
-                                   label = h4('Sex'), 
-                                   choices = as.character(unique(activeData()$Sex)),
-                                   selected = as.character(unique(activeData()$Sex)))
+                                   label = h4('Sex:'), 
+                                   choices = as.character(unique(data$Sex)),
+                                   selected = as.character(unique(data$Sex)))
             )
         }
     })
 
     output$backgroundGroups = renderUI({
-        if ("Background" %in% colnames(activeData())) {
+
+        data = rbind.fill(finalDataSource1(), finalDataSource2())
+
+        if ("Background" %in% colnames(data)) {
             column(4,
                 checkboxGroupInput(inputId = 'backgroundGroups', 
-                                   label = h4('Background'), 
-                                   choices = as.character(unique(activeData()$Background)),
-                                   selected = as.character(unique(activeData()$Background)))
+                                   label = h4('Backgrounds:'), 
+                                   choices = as.character(unique(data$Background)),
+                                   selected = as.character(unique(data$Background)))
             )
+        }
+    })
+
+    output$meansPlot = renderPlot({
+
+        selectedRegions = summaryTable()[input$interactiveTable_rows_selected,]$Region
+
+        if (length(selectedRegions) != 0) {
+            fullData = rbind.fill(finalFilteredDataSource1(), finalFilteredDataSource2())
+            fullData = filter(fullData, Region %in% selectedRegions)
+
+    #         meansPlot = ggplot(data=meansData, aes(x=name, y=volume, fill=genotype, colour=genotype))
+            meansPlot = ggplot(data=fullData, aes(x=Region, y=Volume, fill=Group, colour=Group))
+
+            meansPlot = (meansPlot
+                        + geom_point(position=position_jitterdodge(dodge.width=0.9))
+                        + geom_boxplot(fill='white', position=position_dodge(width=0.9), alpha=0.5, outlier.size=0)
+                        + stat_summary(fun.y=mean, position=position_dodge(width=0.9), shape=3, col='red', geom='point'))
+
+            #         if (tolower(input$volumeType) == 'absolute') {  # absolute volumes
+    #           meansPlot = meansPlot + labs(x='strain', y=bquote(Volume~(mm^{3})))
+    #         } else {  # relative volumes
+    #           meansPlot = meansPlot + labs(x='strain', y='Relative Volume (%)')
+    #         }
+
+            # customize theme aspects of the plot
+            meansPlot = (meansPlot
+                         + facet_wrap( ~ Region, scales='free')
+                         # + theme(plot.title = element_text(color='#000000', face='bold', family='Trebuchet MS', size=24))
+                         # + theme(axis.title = element_text(color='#000000', face='bold', family='Trebuchet MS', size=16))
+                         + theme(axis.title.y = element_text(color='#000000', family='Trebuchet MS', size=16, angle=90))
+                         + theme(axis.text.y = element_text(color='#000000', family='Trebuchet MS', size=14))
+                         + theme(axis.title.x = element_blank())
+                         + theme(axis.text.x = element_text(color='#000000', family='Trebuchet MS', size=16))
+
+                         # + theme(strip.text = element_text(size=20))
+                         + theme(strip.text = element_blank())
+                         + theme(legend.title = element_blank())
+                         + theme(legend.text = element_text(size=14)))
+            
+            meansPlot
         }
     })
 

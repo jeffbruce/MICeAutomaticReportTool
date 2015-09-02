@@ -43,7 +43,15 @@ shinyUI(
         
         hr(),
         
-        p('On this page you\'re given the freedom to select strains and groups you are interested in comparing, calculate significance levels at a custom False discovery rate, filter by mouse metadata (age, sex, etc.), and view the results in an interactive table.  Below the legend you may also choose to plot individual data points using your preferred plot type.'),
+        p('This page gives you the freedom to explore your data.  Here is the suggested workflow:'),
+
+        tags$ul(
+          tags$li('Select whether you want to work with absolute or relative volumes.'),
+          tags$li('Select two groups you want to compare; each group can be an arbitrary combination of Strains, Genotypes, and Treatments.'), 
+          tags$li('The metadata levels for Age, Sex, and Background are automatically populated based on the two groups you selected.  Filter by whatever levels of metadata you want to plot by.  If Age, Sex, and Background are not visible then this means the data files do not all have data for these fields.'),
+          tags$li('Click on a field name in the interactive table to sort the table by that field.'),
+          tags$li('Click on rows in the interactive table to plot them.')
+        ),
        
         hr(),
 
@@ -114,89 +122,93 @@ shinyUI(
           # requires shiny >= 0.12.0, need to use packrat package for this project
           fluidRow(
             column(12, dataTableOutput(outputId='interactiveTable'))
+          ),
+
+          fluidRow(
+            column(12, plotOutput(outputId='meansPlot', height='600px'))
           )
+        )
 
           # hr(),
 
           # fluidRow(column(12, plotOutput(outputId='interactiveTablePlot')))
-        )
       
       )
-    ),
+    )
     
 
 # TAB PANEL ---------------------------------------------------------------
 
-    tabPanel(strong('Hierarchical Clustering'),
+    # tabPanel(strong('Hierarchical Clustering'),
       
-      br(),
-      br(),
-      br(),
+    #   br(),
+    #   br(),
+    #   br(),
              
-      titlePanel('Hierarchical Clustering'),
+    #   titlePanel('Hierarchical Clustering'),
              
-      hr(),
+    #   hr(),
       
-      p('Using the data you filtered and reclustered in the ', tags$mark('Filter and Recluster'), ' tab, here you can zone in on particular mouse strains and brain regions of interest to plot means and effect sizes, using your preferred plot type.'),
+    #   p('Using the data you filtered and reclustered in the ', tags$mark('Filter and Recluster'), ' tab, here you can zone in on particular mouse strains and brain regions of interest to plot means and effect sizes, using your preferred plot type.'),
       
-      hr(),
+    #   hr(),
       
-      fluidRow(
-        column(4, radioButtons(inputId='statisticType',
-                               label=h4('Statistic to Plot:'),
-                               choices=list('Effect Sizes'=1, 
-                                            'Means'=2),
-                               selected=1))
-      ),
+    #   fluidRow(
+    #     column(4, radioButtons(inputId='statisticType',
+    #                            label=h4('Statistic to Plot:'),
+    #                            choices=list('Effect Sizes'=1, 
+    #                                         'Means'=2),
+    #                            selected=1))
+    #   ),
       
-      hr(),
+    #   hr(),
       
-      conditionalPanel(
-        condition="input.statisticType=='1'",
-        fluidRow(
-          column(4, radioButtons(inputId='plotBy',
-                                 label=h4('Plot By:'),
-                                 choices=list('Strain'=1, 
-                                              'Region'=2),
-                                 selected=1)),
-          column(4, uiOutput('selectBoxStrainRegion'))
-        ),
-        hr(),
-        p(strong(em('Effect sizes have been capped at -3.0 and +3.0 for increased readability.'))),
-        fluidRow(
-          column(12, plotOutput(outputId='effectSizePlot',
-                                height='800px'))
-        )
-      ),
+    #   conditionalPanel(
+    #     condition="input.statisticType=='1'",
+    #     fluidRow(
+    #       column(4, radioButtons(inputId='plotBy',
+    #                              label=h4('Plot By:'),
+    #                              choices=list('Strain'=1, 
+    #                                           'Region'=2),
+    #                              selected=1)),
+    #       column(4, uiOutput('selectBoxStrainRegion'))
+    #     ),
+    #     hr(),
+    #     p(strong(em('Effect sizes have been capped at -3.0 and +3.0 for increased readability.'))),
+    #     fluidRow(
+    #       column(12, plotOutput(outputId='effectSizePlot',
+    #                             height='800px'))
+    #     )
+    #   ),
       
-      conditionalPanel(
-        condition="input.statisticType=='2'",
-        fluidRow(
-          column(4, uiOutput('selectInputStrains')),
-          column(4, uiOutput('selectInputRegions')),
-          column(4, radioButtons(inputId='plotType',
-                                 label=h4('Plot Type:'),
-                                 choices=list('Box'=2,
-                                              'Bar'=1,
-                                              'Dot'=4,
-                                              'Violin'=3),
-                                 selected=2))
-        ),
-        hr(),
-        p(strong(em('Error bars are 95% confidence intervals centred about the mean.'))),
-        fluidRow(
-          column(12, plotOutput(outputId='meansPlot',
-                                height='800px'))
-        )
-      ),
+    #   conditionalPanel(
+    #     condition="input.statisticType=='2'",
+    #     fluidRow(
+    #       column(4, uiOutput('selectInputStrains')),
+    #       column(4, uiOutput('selectInputRegions')),
+    #       column(4, radioButtons(inputId='plotType',
+    #                              label=h4('Plot Type:'),
+    #                              choices=list('Box'=2,
+    #                                           'Bar'=1,
+    #                                           'Dot'=4,
+    #                                           'Violin'=3),
+    #                              selected=2))
+    #     ),
+    #     hr(),
+    #     p(strong(em('Error bars are 95% confidence intervals centred about the mean.'))),
+    #     fluidRow(
+    #       column(12, plotOutput(outputId='meansPlot',
+    #                             height='800px'))
+    #     )
+    #   ),
       
-      hr(),
+    #   hr(),
       
-      fluidRow(
-        column(12, plotOutput(outputId='heatmap2', 
-                              height='1000px'))
-      )
-    )
+    #   fluidRow(
+    #     column(12, plotOutput(outputId='heatmap2', 
+    #                           height='1000px'))
+    #   )
+    # )
 
   )
 )

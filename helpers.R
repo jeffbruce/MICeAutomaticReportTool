@@ -8,7 +8,7 @@ datadefs <- as.data.frame(datadefs, stringsAsFactors=FALSE)
 
 # Loading Data ------------------------------------------------------------
 
-GfMetadata = function(gfFiles) {
+GfMetadata <- function(gfFiles) {
   # Summary:
   #   Returns a named vector of the optional fields that users will be able to explore in the app.
   
@@ -29,7 +29,7 @@ GfMetadata = function(gfFiles) {
 }
 
 
-LoadData = function() {
+LoadData <- function() {
   # Summary:
   #   Loads the gf files and both the relative and absolute combined vols data files if they exist.
   
@@ -220,9 +220,6 @@ StatsSummaryTable <- function(df1, df2) {
 
 
 CalculateStats <- function(df1, df2) {
-  df1$Group = 'g1'
-  df2$Group = 'g2'
-  #data = merge(df1, df2, by=colnames(df1), all=TRUE)
   data = rbind.fill(df1, df2)
   pvals = ddply(data, .(Region), ttesthelper)
   setnames(pvals, c('Region', 'P_value'))
