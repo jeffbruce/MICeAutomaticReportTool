@@ -359,31 +359,56 @@ shinyServer(
     #         meansPlot = ggplot(data=meansData, aes(x=name, y=volume, fill=genotype, colour=genotype))
             meansPlot = ggplot(data=fullData, aes(x=Region, y=Volume, fill=Group, colour=Group))
 
-            meansPlot = (meansPlot
-                        + geom_point(position=position_jitterdodge(dodge.width=0.9))
-                        + geom_boxplot(fill='white', position=position_dodge(width=0.9), alpha=0.5, outlier.size=0)
-                        + stat_summary(fun.y=mean, position=position_dodge(width=0.9), shape=3, col='red', geom='point'))
+            if (input$plotType == 1) {
+                dodge = position_dodge(width=0.9)
+                meansPlot = (meansPlot
+                            + stat_summary(fun.y=mean, position=position_dodge(width=1), geom='bar')
+                            + stat_summary(fun.data=mean_cl_normal, position=position_dodge(width=1), geom='errorbar', color='black', size=0.5, width=0.5))
+    #                        + scale_y_continuous(limits=c(min(meansData$volume), max(meansData$volume)))
+            } else if (input$plotType == 2) {
+                meansPlot = (meansPlot
+                            + geom_point(position=position_jitterdodge(dodge.width=0.9))
+                            + geom_boxplot(fill='white', position=position_dodge(width=0.9), alpha=0.5, outlier.size=0)
+                            + stat_summary(fun.y=mean, position=position_dodge(width=0.9), shape=3, col='red', geom='point'))
+            } else if (input$plotType == 3) {
+                meansPlot = (meansPlot
+                            + geom_point(position=position_jitterdodge(dodge.width=0.9))
+                            + geom_violin(fill='white', position=position_dodge(width=0.9), alpha=0.5))
+            } else if (input$plotType == 4) {
+                # means = tapply(meansData$volume, meansData$genotype, mean)
+                # sds = tapply(meansData$volume, meansData$genotype, sd)
+                meansPlot = (meansPlot
+                            + geom_point(position=position_jitterdodge(dodge=1.0))
+                            + stat_summary(fun.data=mean_cl_normal, position=position_dodge(width=1.0), geom='errorbar', color='black', size=0.5, width=0.5))
+    #                        + stat_summary(fun.y=mean, position=position_dodge(width=1.0), shape=1, col='red', geom='point'))
+            }
 
-            #         if (tolower(input$volumeType) == 'absolute') {  # absolute volumes
-    #           meansPlot = meansPlot + labs(x='strain', y=bquote(Volume~(mm^{3})))
-    #         } else {  # relative volumes
-    #           meansPlot = meansPlot + labs(x='strain', y='Relative Volume (%)')
-    #         }
+    #         meansPlot = (meansPlot
+    #                     + geom_point(position=position_jitterdodge(dodge.width=0.9))
+    #                     + geom_boxplot(fill='white', position=position_dodge(width=0.9), alpha=0.5, outlier.size=0)
+    #                     + stat_summary(fun.y=mean, position=position_dodge(width=0.9), shape=3, col='red', geom='point'))
+
+    #         #         if (tolower(input$volumeType) == 'absolute') {  # absolute volumes
+    # #           meansPlot = meansPlot + labs(x='strain', y=bquote(Volume~(mm^{3})))
+    # #         } else {  # relative volumes
+    # #           meansPlot = meansPlot + labs(x='strain', y='Relative Volume (%)')
+    # #         }
 
             # customize theme aspects of the plot
             meansPlot = (meansPlot
-                         + facet_wrap( ~ Region, scales='free')
+                        + facet_wrap( ~ Region, scales='free')
                          # + theme(plot.title = element_text(color='#000000', face='bold', family='Trebuchet MS', size=24))
                          # + theme(axis.title = element_text(color='#000000', face='bold', family='Trebuchet MS', size=16))
-                         + theme(axis.title.y = element_text(color='#000000', family='Trebuchet MS', size=16, angle=90))
-                         + theme(axis.text.y = element_text(color='#000000', family='Trebuchet MS', size=14))
-                         + theme(axis.title.x = element_blank())
-                         + theme(axis.text.x = element_text(color='#000000', family='Trebuchet MS', size=16))
+                        + theme(axis.title.y = element_text(color='#000000', family='Trebuchet MS', size=16, angle=90))
+                        + theme(axis.text.y = element_text(color='#000000', family='Trebuchet MS', size=14))
+                        + theme(axis.title.x = element_blank())
+                         # + theme(axis.text.x = element_text(color='#000000', family='Trebuchet MS', size=16))
+                        + theme(axis.text.x = element_blank())
 
-                         # + theme(strip.text = element_text(size=20))
-                         + theme(strip.text = element_blank())
-                         + theme(legend.title = element_blank())
-                         + theme(legend.text = element_text(size=14)))
+                        + theme(strip.text = element_text(size=16))
+                         # + theme(strip.text = element_blank())
+                        + theme(legend.title = element_blank())
+                        + theme(legend.text = element_text(size=14)))
             
             meansPlot
         }

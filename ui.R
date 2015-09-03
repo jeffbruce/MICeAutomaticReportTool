@@ -100,6 +100,16 @@ shinyUI(
                                    selected='5%'))
           ),
 
+          fluidRow(
+            column(4, radioButtons(inputId='plotType',
+                                   label=h4('Plot Type:'),
+                                   choices=list('Box'=2,
+                                                'Bar'=1,
+                                                'Dot'=4,
+                                                'Violin'=3),
+                                   selected=2))
+          ),
+
           # only show up if strain is populated
           # fluidRow(genotypes1, genotypes2)
 
