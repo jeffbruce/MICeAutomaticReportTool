@@ -3,6 +3,7 @@
 # Only defined for relative volumes but "relative" is replaced with "absolute" when actually loading the data, but only for the combined_vols files, not the gf files.
 # datadefs <- rbind(c(name="TSC1", gf="gf_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"))
 datadefs <- rbind(c(name="TSC1", gf="gf_Tsai_40um_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"))
+# datadefs <- rbind(c(name="TSC1", gf="gf_Tsai_40um_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"), c(name="ITGB3", gf="gf_ITGB3", data="combined_vols_ITGB3",term="Genotype", G1="WT", G2="KO", group="ITGB3"))
 datadefs <- as.data.frame(datadefs, stringsAsFactors=FALSE)
 
 
