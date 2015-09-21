@@ -1,8 +1,8 @@
 # Data Specification ---------------------------------------
 
 # Only defined for relative volumes but "relative" is replaced with "absolute" when actually loading the data, but only for the combined_vols files, not the gf files.
-datadefs <- rbind(c(name="TSC1", gf="gf_Tsai_40um_factorage", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"))
-
+# datadefs <- rbind(c(name="TSC1", gf="gf_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"))
+datadefs <- rbind(c(name="TSC1", gf="gf_Tsai_40um_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"))
 datadefs <- as.data.frame(datadefs, stringsAsFactors=FALSE)
 
 
@@ -72,10 +72,10 @@ IndividualData <- function(datadefs, volumeType) {
   # Find optional fields that might be contained in the gf files that users could plot by.
   gfMetadata = GfMetadata(datadefs$gf)
   
-  # <app dir>/data/ should is the base path for data
+  # <app dir>/data/ is the base path for data
   basePath = paste(getwd(), '/data/', sep='')
   
-  # Get an example combined vols file and save to a data frame.  Assumes that the first combined vols data file specified in datadefs is in the /data/ subdirectory.
+  # Get an example combined vols file and save to a data frame.  Assumes the first combined vols data file specified in datadefs is in the /data/ subdirectory.
   combinedVolsFile = paste(basePath, datadefs$data[1], '_absolute.txt', sep='')
   if (file.exists(combinedVolsFile)) {
     combinedVolsDf = read.table(combinedVolsFile)
@@ -95,8 +95,8 @@ IndividualData <- function(datadefs, volumeType) {
   individualData = individualData[-1, ]  # remove NAs from initialization
   
   # Set appropriate column names.
-  individualDataColLabels = c(regionNameDictionary, "Strain", "Genotype", names(gfMetadataTrue))
-  setnames(individualData, individualDataColLabels)
+  colLabels = c(regionNameDictionary, "Strain", "Genotype", names(gfMetadataTrue))
+  setnames(individualData, colLabels)
   
   # Loop through the gf files that need to be processed and extract the data.
   for (i in 1:nrow(datadefs)) {
@@ -109,22 +109,24 @@ IndividualData <- function(datadefs, volumeType) {
 
       tempData = get(filename)
       tempData = as.data.table(tempData)
-
-      # If RawAge is in the file, it will read "5" in as an integer, even when written in quotes.  It probably also reads 5 in as an integer, though I haven't tested this.
       gfFile = get(row$gf)
        
       # Set proper column names.  Look up names from a dictionary (named vector).
       setnames(tempData, regionNameDictionary)
       tempData$Strain = row$name
       tempData$Genotype = gfFile$Genotype
-      
+
       # Get optional column names (Treatment, RawAge, FactorAge, Sex, Background).
       for (i in 1:length(gfMetadataTrue)) {
-        tempData[, names(gfMetadataTrue)[i]] = get(names(gfMetadataTrue[i]), gfFile)
+        tryCatch({
+          tempData[, names(gfMetadataTrue)[i]] = get(names(gfMetadataTrue[i]), gfFile)
+        }, error = function(err) {
+        
+        })
       }
 
       # Append data to total dataset.
-      individualData = rbind(individualData, tempData)
+      individualData = rbindlist(list(individualData, tempData), use.names=TRUE, fill=TRUE)
     }
   }
   
@@ -135,6 +137,8 @@ IndividualData <- function(datadefs, volumeType) {
   individualData$Region = as.factor(individualData$Region)
   individualData$Strain = as.factor(individualData$Strain)
   
+  individualData = na.omit(individualData)
+
   return(individualData)
 }
 
@@ -199,6 +203,7 @@ StatsSummaryTable <- function(df1, df2) {
   means2 = with(df2, tapply(Volume, Region, mean))
   sds2 = with(df2, tapply(Volume, Region, sd))
   d = abs(means1 - means2)/sds1
+  pcent = ((means2 - means1)/means1)*100
 
   # Round for display in interactive table.
   r_means1 = round(means1, 2)
@@ -206,10 +211,11 @@ StatsSummaryTable <- function(df1, df2) {
   r_means2 = round(means2, 2)
   r_sds2 = round(sds2, 2)
   r_d = round(d, 2)
+  r_pcent = round(pcent, 2)
 
   pvals = CalculateStats(df1, df2)
 
-  summaryTable = data.frame("Region"=rownames(r_means1), "G1Mean"=r_means1, "G1Stdev"=r_sds1, "G2Mean"=r_means2, "G2Stdev"=r_sds2, "Effect"=r_d)
+  summaryTable = data.frame("Region"=rownames(r_means1), "G1Mean"=r_means1, "G1Stdev"=r_sds1, "G2Mean"=r_means2, "G2Stdev"=r_sds2, "PercentDiff"=r_pcent, "Effect"=r_d)
   summaryTable = merge(summaryTable, pvals, by='Region')
   summaryTable$P_value = round(summaryTable$P_value, 3)
   summaryTable$FDR_P_value = round(summaryTable$FDR_P_value, 3)

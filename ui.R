@@ -46,16 +46,17 @@ shinyUI(
         p('This page gives you the freedom to explore your data.  Here is the suggested workflow:'),
 
         tags$ul(
-          tags$li('Select whether you want to work with absolute or relative volumes.'),
           tags$li('Select two groups you want to compare; each group can be an arbitrary combination of Strains, Genotypes, and Treatments.'), 
-          tags$li('The metadata levels for Age, Sex, and Background are automatically populated based on the two groups you selected.  Filter by whatever levels of metadata you want to plot by.  If Age, Sex, and Background are not visible then this means the data files do not all have data for these fields.'),
+          tags$li('The metadata options (Age, Sex, and Background) are dynamically populated for each group.  Filter by whatever levels of metadata you want to plot by for each group.  Age, Sex, and Background will only appear for a selected group if these fields are defined in all gf files that are being used in that group.'),
           tags$li('Click on a field name in the interactive table to sort the table by that field.'),
-          tags$li('Click on rows in the interactive table to plot them.')
+          tags$li('Select regions and factors to plot by.')
         ),
        
         hr(),
 
         sidebarPanel(
+
+          h3(tags$u('Groups to Compare')),
 
           fluidRow(
             column(6, selectInput(inputId = 'selectStrains1', 
@@ -80,11 +81,27 @@ shinyUI(
             uiOutput('selectTreatments2')
           ),
 
+          h3(tags$u('Group 1 Metadata')),
+
           fluidRow(
-            uiOutput('ageGroups'),
-            uiOutput('sexGroups'),
-            uiOutput('backgroundGroups')
+            uiOutput('ageGroups1'),
+            uiOutput('sexGroups1'),
+            uiOutput('backgroundGroups1')
           ),
+
+          br(),
+
+          h3(tags$u('Group 2 Metadata')),
+
+          fluidRow(
+            uiOutput('ageGroups2'),
+            uiOutput('sexGroups2'),
+            uiOutput('backgroundGroups2')
+          ),
+
+          br(),
+
+          h3(tags$u('Plotting Options')),
 
           fluidRow(
             column(4, radioButtons(inputId='volumeType',
@@ -92,15 +109,12 @@ shinyUI(
                                    choices=list('Absolute', 
                                                 'Relative'),
                                    selected='Absolute')),
-            column(4, radioButtons(inputId='fdrLevel',
-                                   label=h4('FDR:'),
-                                   choices=list('1%', 
-                                                '5%',
-                                                '10%'),
-                                   selected='5%'))
-          ),
-
-          fluidRow(
+            # column(4, radioButtons(inputId='fdrLevel',
+            #                        label=h4('FDR:'),
+            #                        choices=list('1%', 
+            #                                     '5%',
+            #                                     '10%'),
+            #                        selected='5%'))
             column(4, radioButtons(inputId='plotType',
                                    label=h4('Plot Type:'),
                                    choices=list('Box'=2,
@@ -108,6 +122,10 @@ shinyUI(
                                                 'Dot'=4,
                                                 'Violin'=3),
                                    selected=2))
+          ),
+
+          fluidRow(
+            uiOutput('regionsToPlot')
           ),
 
           # only show up if strain is populated
@@ -145,80 +163,6 @@ shinyUI(
       
       )
     )
-    
-
-# TAB PANEL ---------------------------------------------------------------
-
-    # tabPanel(strong('Hierarchical Clustering'),
-      
-    #   br(),
-    #   br(),
-    #   br(),
-             
-    #   titlePanel('Hierarchical Clustering'),
-             
-    #   hr(),
-      
-    #   p('Using the data you filtered and reclustered in the ', tags$mark('Filter and Recluster'), ' tab, here you can zone in on particular mouse strains and brain regions of interest to plot means and effect sizes, using your preferred plot type.'),
-      
-    #   hr(),
-      
-    #   fluidRow(
-    #     column(4, radioButtons(inputId='statisticType',
-    #                            label=h4('Statistic to Plot:'),
-    #                            choices=list('Effect Sizes'=1, 
-    #                                         'Means'=2),
-    #                            selected=1))
-    #   ),
-      
-    #   hr(),
-      
-    #   conditionalPanel(
-    #     condition="input.statisticType=='1'",
-    #     fluidRow(
-    #       column(4, radioButtons(inputId='plotBy',
-    #                              label=h4('Plot By:'),
-    #                              choices=list('Strain'=1, 
-    #                                           'Region'=2),
-    #                              selected=1)),
-    #       column(4, uiOutput('selectBoxStrainRegion'))
-    #     ),
-    #     hr(),
-    #     p(strong(em('Effect sizes have been capped at -3.0 and +3.0 for increased readability.'))),
-    #     fluidRow(
-    #       column(12, plotOutput(outputId='effectSizePlot',
-    #                             height='800px'))
-    #     )
-    #   ),
-      
-    #   conditionalPanel(
-    #     condition="input.statisticType=='2'",
-    #     fluidRow(
-    #       column(4, uiOutput('selectInputStrains')),
-    #       column(4, uiOutput('selectInputRegions')),
-    #       column(4, radioButtons(inputId='plotType',
-    #                              label=h4('Plot Type:'),
-    #                              choices=list('Box'=2,
-    #                                           'Bar'=1,
-    #                                           'Dot'=4,
-    #                                           'Violin'=3),
-    #                              selected=2))
-    #     ),
-    #     hr(),
-    #     p(strong(em('Error bars are 95% confidence intervals centred about the mean.'))),
-    #     fluidRow(
-    #       column(12, plotOutput(outputId='meansPlot',
-    #                             height='800px'))
-    #     )
-    #   ),
-      
-    #   hr(),
-      
-    #   fluidRow(
-    #     column(12, plotOutput(outputId='heatmap2', 
-    #                           height='1000px'))
-    #   )
-    # )
 
   )
 )
