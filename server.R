@@ -262,30 +262,38 @@ shinyServer(
     output$ageGroups1 = renderUI({
 
         data = finalDataSource1()
-        min = min(data$RawAge)
-        max = max(data$RawAge)
 
-        sliderInput(inputId="ageGroups1", 
-                    label=h4("Age Range (Days):"), 
-                    min=min, 
-                    max=max, 
-                    value=c(min, max),
-                    round=TRUE,
-                    step=1)
+        if ("RawAge" %in% colnames(data)) {
+
+            min = min(data$RawAge)
+            max = max(data$RawAge)
+
+            sliderInput(inputId="ageGroups1", 
+                        label=h4("Age Range (Days):"), 
+                        min=min, 
+                        max=max, 
+                        value=c(min, max),
+                        round=TRUE,
+                        step=1)
+        }
     })
     output$ageGroups2 = renderUI({
 
         data = finalDataSource2()
-        min = min(data$RawAge)
-        max = max(data$RawAge)
 
-        sliderInput(inputId="ageGroups2", 
-                    label=h4("Age Range (Days):"), 
-                    min=min, 
-                    max=max, 
-                    value=c(min, max),
-                    round=TRUE,
-                    step=1)
+        if ("RawAge" %in% colnames(data)) {
+
+            min = min(data$RawAge)
+            max = max(data$RawAge)
+
+            sliderInput(inputId="ageGroups2", 
+                        label=h4("Age Range (Days):"), 
+                        min=min, 
+                        max=max, 
+                        value=c(min, max),
+                        round=TRUE,
+                        step=1)
+        }
     })
 
     output$sexGroups1 = renderUI({

@@ -121,10 +121,7 @@ shinyUI(
                                                 'Bar'=1,
                                                 'Dot'=4,
                                                 'Violin'=3),
-                                   selected=2))
-          ),
-
-          fluidRow(
+                                   selected=2)),
             uiOutput('regionsToPlot')
           ),
 

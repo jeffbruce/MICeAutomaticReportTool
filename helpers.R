@@ -2,7 +2,8 @@
 
 # Only defined for relative volumes but "relative" is replaced with "absolute" when actually loading the data, but only for the combined_vols files, not the gf files.
 # datadefs <- rbind(c(name="TSC1", gf="gf_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"))
-datadefs <- rbind(c(name="TSC1", gf="gf_Tsai_40um_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"))
+# datadefs <- rbind(c(name="TSC1", gf="gf_Tsai_40um_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"))
+datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1"))
 # datadefs <- rbind(c(name="TSC1", gf="gf_Tsai_40um_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"), c(name="ITGB3", gf="gf_ITGB3", data="combined_vols_ITGB3",term="Genotype", G1="WT", G2="KO", group="ITGB3"))
 datadefs <- as.data.frame(datadefs, stringsAsFactors=FALSE)
 
@@ -10,10 +11,8 @@ datadefs <- as.data.frame(datadefs, stringsAsFactors=FALSE)
 # Loading Data ------------------------------------------------------------
 
 GfMetadata <- function(gfFiles) {
-  # Summary:
-  #   Returns a named vector of the optional fields that users will be able to explore in the app.
+  # Returns a named vector containing all metadata fields that are used in the app (in any of the gf files).
   
-  # Determine which optional metadata columns being used in the gf files.
   gfMetadata = c("Treatment"=FALSE, "Sex"=FALSE, "Background"=FALSE, "FactorAge"=FALSE, "RawAge"=FALSE)
   for (file in gfFiles) {
     gfFile = paste(getwd(), "/data/", file, ".txt", sep="")
@@ -31,8 +30,7 @@ GfMetadata <- function(gfFiles) {
 
 
 LoadData <- function() {
-  # Summary:
-  #   Loads the gf files and both the relative and absolute combined vols data files if they exist.
+  # Loads the gf files and both the relative and absolute combined vols data files if they exist.
   
   dataFiles = datadefs$data
   gfFiles = datadefs$gf
@@ -40,14 +38,14 @@ LoadData <- function() {
   # load gf files
   for (file in gfFiles) {
     gfFile = paste(getwd(), "/data/", file, ".txt", sep="")
-    assign(x=file, value=read.table(file=gfFile, header=TRUE, sep=" "), envir=parent.frame())
+    assign(x=file, value=read.table(file=gfFile, header=TRUE, sep=" ", check.names=FALSE), envir=parent.frame())
   }
   
   # load relative volume files
   for (file in dataFiles) {
     relativeFile = paste(getwd(), "/data/", file, "_relative.txt", sep="")
     if (file.exists(relativeFile)) {
-      assign(x=paste(file, "_relative", sep=""), value=read.table(file=relativeFile, header=TRUE, sep=" "), envir=parent.frame())
+      assign(x=paste(file, "_relative", sep=""), value=read.table(file=relativeFile, header=TRUE, sep=" ", check.names=FALSE), envir=parent.frame())
     }
   }
   
@@ -55,48 +53,54 @@ LoadData <- function() {
   for (file in dataFiles) {
     absoluteFile = paste(getwd(), "/data/", file, "_absolute.txt", sep="")
     if (file.exists(absoluteFile)) {
-      assign(x=paste(file, "_absolute", sep=""), value=read.table(file=absoluteFile, header=TRUE, sep=" "), envir=parent.frame())
+      assign(x=paste(file, "_absolute", sep=""), value=read.table(file=absoluteFile, header=TRUE, sep=" ", check.names=FALSE), envir=parent.frame())
     }
   }
 }
 
 
+SimpleCap <- function(x) {
+  s <- strsplit(x, " ")[[1]]
+  paste(toupper(substring(s, 1,1)), substring(s, 2),
+      sep="", collapse=" ")
+}
+
+
 IndividualData <- function(datadefs, volumeType) {
   # Summary:
-  #   Creates a data table containing volume data for each individual mouse for each brain region.
+  #   Creates a data table containing brain region volume data for each individual mouse.
   # Args:
-  #   datadefs: A specification of the data files and the labels used to represent different strains.
-  #   volumeType: One of 'relative' or 'absolute'.
+  #   datadefs: A data frame containing information about each strain.  Defined at the top of helpers.R.
+  #   volumeType: Either 'relative' or 'absolute'.
   # Returns:
   #   A data table containing volume data for each individual mouse for each brain region.
-  
-  # Find optional fields that might be contained in the gf files that users could plot by.
-  gfMetadata = GfMetadata(datadefs$gf)
   
   # <app dir>/data/ is the base path for data
   basePath = paste(getwd(), '/data/', sep='')
   
-  # Get an example combined vols file and save to a data frame.  Assumes the first combined vols data file specified in datadefs is in the /data/ subdirectory.
-  combinedVolsFile = paste(basePath, datadefs$data[1], '_absolute.txt', sep='')
-  if (file.exists(combinedVolsFile)) {
-    combinedVolsDf = read.table(combinedVolsFile)
+  # Get example combined vols file.  Tries the first row of datadefs.
+  absoluteFile = paste(basePath, datadefs$data[1], '_absolute.txt', sep='')
+  relativeFile = paste(basePath, datadefs$data[1], '_relative.txt', sep='')
+  if (file.exists(absoluteFile)) {
+    combinedVolsDf = read.table(absoluteFile, check.names=FALSE)
+  } else if (file.exists(relativeFile)) {
+    combinedVolsDf = read.table(relativeFile, check.names=FALSE)
   } else {
-    combinedVolsFile = paste(basePath, datadefs$data[1], '_relative.txt', sep='')
-    combinedVolsDf = read.table(combinedVolsFile)
+    stop(paste('Error:', absoluteFile, 'and', relativeFile, 'do not exist'))
   }
   
-  # Returns the fields in gfMetadata that are marked TRUE.
+  # Find metadata columns that were specified in the gf files.
+  gfMetadata = GfMetadata(datadefs$gf)
   gfMetadataTrue = which(gfMetadata)
-
-  # Calculate how many optional columns were used in the gf files.
   count = length(gfMetadataTrue)
   
-  # number of columns = Strain + Genotype + count (optional columns like Treatment, Sex, Age, etc.) + Num Regions
+  dirtyColNames = colnames(combinedVolsDf)
+  formattedColNames = sapply(dirtyColNames, SimpleCap)
+
+  # create individualData data table to store all the data
   individualData = data.table(matrix(ncol = 2 + count + dim(combinedVolsDf)[2]))
   individualData = individualData[-1, ]  # remove NAs from initialization
-  
-  # Set appropriate column names.
-  colLabels = c(regionNameDictionary, "Strain", "Genotype", names(gfMetadataTrue))
+  colLabels = c(formattedColNames, "Strain", "Genotype", names(gfMetadataTrue))
   setnames(individualData, colLabels)
   
   # Loop through the gf files that need to be processed and extract the data.
@@ -112,8 +116,13 @@ IndividualData <- function(datadefs, volumeType) {
       tempData = as.data.table(tempData)
       gfFile = get(row$gf)
        
+      # Check that the combined vols column names are the same as those used previously.  This needs to be tested.
+      if (!all(colnames(tempData)==dirtyColNames)) {
+        stop('All your combined vols files must have identical column names and be in the same order.')
+      }
+
       # Set proper column names.  Look up names from a dictionary (named vector).
-      setnames(tempData, regionNameDictionary)
+      setnames(tempData, formattedColNames)
       tempData$Strain = row$name
       tempData$Genotype = gfFile$Genotype
 
@@ -141,57 +150,6 @@ IndividualData <- function(datadefs, volumeType) {
   individualData = na.omit(individualData)
 
   return(individualData)
-}
-
-
-# Quality Assurance -------------------------------------------------------
-
-CheckCombinedVolsFiles <- function() {
-  # Summary:
-  #   Loop through all combined vols files, ensure all column names are same and in same order.  Called at outset of app to prevent user from running app if files do not have same column schema.
-  # Returns:
-  #   TRUE if all combined vols files have same column schema.
-  #   FALSE if some combined vols files have different column schema.
-  
-  dataFiles = datadefs$data
-  gfFiles = datadefs$gf
-  
-  # get region names
-  volumeFile = paste(getwd(), "/data/", dataFiles[1], "_relative.txt", sep="")
-  if (file.exists(volumeFile)) {
-    volumeDf = read.table(volumeFile)
-    regionNames = colnames(volumeDf)
-  } else {
-    volumeFile = paste(getwd(), "/data/", dataFiles[1], "_absolute.txt", sep="")
-    volumeDf = read.table(volumeFile)
-    regionNames = colnames(volumeDf)
-  }
-  
-  # load relative volume files
-  for (file in dataFiles) {
-    relativeFile = paste(getwd(), "/data/", file, "_relative.txt", sep="")
-    if (file.exists(relativeFile)) {
-      volumeDf = read.table(relativeFile)
-      otherRegionNames = colnames(volumeDf)
-      if (!all(otherRegionNames == regionNames)) {
-        return(FALSE)
-      }
-    }
-  }
-  
-  # load absolute volume files
-  for (file in dataFiles) {
-    absoluteFile = paste(getwd(), "/data/", file, "_absolute.txt", sep="")
-    if (file.exists(absoluteFile)) {
-      volumeDf = read.table(absoluteFile)
-      otherRegionNames = colnames(volumeDf)
-      if (!all(otherRegionNames == regionNames)) {
-        return(FALSE)
-      }
-    }
-  }
-  
-  return(TRUE)
 }
 
 
@@ -241,106 +199,48 @@ ttesthelper <- function(x) {
   t.test(x[,'Volume'] ~ x[,'Group'])$p.value
 }
 
+# Quality Assurance -------------------------------------------------------
 
-# Proper Column Names ----------------------------------------------------------
-
-# Doesn't need to be a named list!  Can simply be a named vector.  Lists are only needed if the elements are of different types.
-regionNameDictionary <- c("amygdala"="Amygdala", 
-                             "anterior.commissure..pars.anterior"="Anterior Commissure - Pars Anterior",
-                             "anterior.commissure..pars.posterior"="Anterior Commissure - Pars Posterior",
-                             "basal.forebrain"="Basal Forebrain",
-                             "bed.nucleus.of.stria.terminalis"="Bed Nucleus of Stria Terminalis",
-                             "cerebellar.peduncle..inferior"="Cerebellar Peduncle - Inferior",
-                             "cerebellar.peduncle..middle"="Cerebellar Peduncle - Middle",
-                             "cerebellar.peduncle..superior"="Cerebellar Peduncle - Superior",
-                             "cerebral.aqueduct"="Cerebral Aqueduct",
-                             "cerebral.cortex..entorhinal.cortex"="Entorhinal Cortex",
-                             "cerebral.cortex..frontal.lobe"="Frontal Lobe",
-                             "cerebral.cortex..occipital.lobe"="Occipital Lobe",
-                             "cerebral.cortex..parieto.temporal.lobe"="Parieto-Temporal Lobe",
-                             "cerebral.peduncle"="Cerebral Peduncle",
-                             "colliculus..inferior"="Inferior Colliculus",
-                             "colliculus..superior"="Superior Colliculus",
-                             "corpus.callosum"="Corpus Callosum",
-                             "corticospinal.tract.pyramids"="Corticospinal Tract",
-                             "cuneate.nucleus"="Cuneate Nucleus",
-                             "dentate.gyrus.of.hippocampus"="Dentate Gyrus",
-                             "facial.nerve..cranial.nerve.7."="Cranial Nerve 7",
-                             "fasciculus.retroflexus"="Fasciculus Retroflexus",
-                             "fimbria"="Fimbria",
-                             "fornix"="Fornix",
-                             "fourth.ventricle"="Fourth Ventricle",
-                             "fundus.of.striatum"="Fundus of Striatum",
-                             "globus.pallidus"="Globus Pallidus",
-                             "habenular.commissure"="Habenular Commissure",
-                             "hippocampus"="Hippocampus",
-                             "hypothalamus"="Hypothalamus",
-                             "inferior.olivary.complex"="Inferior Olivary Complex",
-                             "internal.capsule"="Internal Capsule",
-                             "interpedunclar.nucleus"="Interpeduncular Nucleus",
-                             "lateral.olfactory.tract"="Lateral Olfactory Tract",
-                             "lateral.septum"="Lateral Septum",
-                             "lateral.ventricle"="Lateral Ventricle",
-                             "mammillary.bodies"="Mammillary Bodies",
-                             "mammilothalamic.tract"="Mammillothalamic Tract",
-                             "medial.lemniscus.medial.longitudinal.fasciculus"="Medial Longitudinal Fasciculus",
-                             "medial.septum"="Medial Septum",
-                             "medulla"="Medulla",
-                             "midbrain"="Midbrain",
-                             "nucleus.accumbens"="Nucleus Accumbens",
-                             "olfactory.bulbs"="Olfactory Bulbs",
-                             "olfactory.tubercle"="Olfactory Tubercle",
-                             "optic.tract"="Optic Tract",
-                             "periaqueductal.grey"="Periaqueductal Grey",
-                             "pons"="Pons",
-                             "pontine.nucleus"="Pontine Nucleus",
-                             "posterior.commissure"="Posterior Commissure",
-                             "pre.para.subiculum"="Pre-Para Subiculum",
-                             "stratum.granulosum.of.hippocampus"="Stratum Granulosum",
-                             "stria.medullaris"="Stria Medullaris",
-                             "stria.terminalis"="Stria Terminalis",
-                             "striatum"="Striatum",
-                             "subependymale.zone...rhinocele"="Rhinocele",
-                             "superior.olivary.complex"="Superior Olivary Complex",
-                             "thalamus"="Thalamus",
-                             "third.ventricle"="Third Ventricle",
-                             "ventral.tegmental.decussation"="Ventral Tegmental Decussation",
-                             "lobules.1.2..lingula.and.central.lobule..ventral."="Lobules 1-2 - Lingula and Central Lobule (Ventral)",
-                             "lobule.3..central.lobule..dorsal."="Lobule 3 - Central Lobule (Dorsal)",
-                             "lobules.4.5..culmen..ventral.and.dorsal."="Lobules 4-5 - Culmen (Ventral and Dorsal)",
-                             "lobule.6..declive"="Lobule 6 - Declive",
-                             "lobule.7..tuber..or.folium."="Lobule 7 - Tuber (Or Folium)",
-                             "lobule.8..pyramis"="Lobule 8 - Pyramis",
-                             "lobule.9..uvula"="Lobule 9 - Uvula",
-                             "lobule.10..nodulus"="Lobule 10 - Nodulus",
-                             "anterior.lobule...lobules.4.5."="Anterior Lobule (Lobules 4-5)",
-                             "simple.lobule..lobule.6."="Simple Lobule (Lobule 6)",
-                             "crus.1..ansiform.lobule..lobule.6."="Crus 1 - Ansiform Lobule (Lobule 6)",
-                             "crus.2..ansiform.lobule..lobule.7."="Crus 2 - Ansiform Lobule (Lobule 7)",
-                             "paramedian.lobule..lobule.7."="Paramedian Lobule (Lobule 7)",
-                             "copula..pyramis..lobule.8."="Copula - Pyramis (Lobule 8)",
-                             "flocculus..FL."="Flocculus (FL)",
-                             "paraflocculus..PFL."="Paraflocculus (PFL)",
-                             "trunk.of.arbor.vita"="Trunk of Arbor Vita",
-                             "lobule.1.2.white.matter"="Lobules 1-2 - White Matter",
-                             "lobule.3.white.matter"="Lobule 3 - White Matter",
-                             "trunk.of.lobules.1.3.white.matter"="Trunk of Lobules 1-3 - White Matter",
-                             "lobules.4.5.white.matter"="Lobules 4-5 - White Matter",
-                             "lobules.6.7.white.matter"="Lobules 6-7 - White Matter",
-                             "lobule.8.white.matter"="Lobule 8 - White Matter",
-                             "trunk.of.lobules.6.8.white.matter"="Trunk of Lobules 6-8 - White Matter",
-                             "lobule.9.white.matter"="Lobule 9 - White Matter",
-                             "lobule.10.white.matter"="Lobule 10 - White Matter",
-                             "anterior.lobule.white.matter"="Anterior Lobule - White Matter",
-                             "simple.lobule.white.matter"="Simple Lobule - White Matter",
-                             "crus.1.white.matter"="Crus 1 - White Matter",
-                             "trunk.of.simple.and.crus.1.white.matter"="Trunk of Simple and Crus 1 - White Matter",
-                             "crus.2.white.matter"="Crus 2 - White Matter",
-                             "paramedian.lobule"="Paramedian Lobule",
-                             "trunk.of.crus.2.and.paramedian.white.matter"="Trunk of Crus 2 and Paramedian - White Matter",
-                             "copula.white.matter"="Copula - White Matter",
-                             "paraflocculus.white.matter"="Paraflocculus - White Matter",
-                             "flocculus.white.matter"="Flocculus - White Matter",
-                             "dentate.nucleus"="Dentate Nucleus",
-                             "nucleus.interpositus"="Nucleus Interpositus",
-                             "fastigial.nucleus"="Fastigial Nucleus")
+CheckCombinedVolsFiles <- function() {
+  # Returns TRUE if all combined vols files in the app contain the same column names; otherwise, FALSE.
+  
+  dataFiles = datadefs$data
+  gfFiles = datadefs$gf
+  
+  # get region names
+  volumeFile = paste(getwd(), "/data/", dataFiles[1], "_relative.txt", sep="")
+  if (file.exists(volumeFile)) {
+    volumeDf = read.table(volumeFile)
+    regionNames = colnames(volumeDf)
+  } else {
+    volumeFile = paste(getwd(), "/data/", dataFiles[1], "_absolute.txt", sep="")
+    volumeDf = read.table(volumeFile)
+    regionNames = colnames(volumeDf)
+  }
+  
+  # load relative volume files
+  for (file in dataFiles) {
+    relativeFile = paste(getwd(), "/data/", file, "_relative.txt", sep="")
+    if (file.exists(relativeFile)) {
+      volumeDf = read.table(relativeFile)
+      otherRegionNames = colnames(volumeDf)
+      if (!all(otherRegionNames == regionNames)) {
+        return(FALSE)
+      }
+    }
+  }
+  
+  # load absolute volume files
+  for (file in dataFiles) {
+    absoluteFile = paste(getwd(), "/data/", file, "_absolute.txt", sep="")
+    if (file.exists(absoluteFile)) {
+      volumeDf = read.table(absoluteFile)
+      otherRegionNames = colnames(volumeDf)
+      if (!all(otherRegionNames == regionNames)) {
+        return(FALSE)
+      }
+    }
+  }
+  
+  return(TRUE)
+}
