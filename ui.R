@@ -121,7 +121,11 @@ shinyUI(
                                                 'Bar'=1,
                                                 'Dot'=4,
                                                 'Violin'=3),
-                                   selected=2)),
+                                   selected=2))
+          ),
+
+          fluidRow(
+            uiOutput('strainsToPlot'),
             uiOutput('regionsToPlot')
           ),
 
@@ -150,7 +154,7 @@ shinyUI(
           ),
 
           fluidRow(
-            column(12, plotOutput(outputId='meansPlot', height='600px'))
+            column(12, plotOutput(outputId='meansPlot'))
           )
         )
 

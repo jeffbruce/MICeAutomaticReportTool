@@ -3,15 +3,38 @@
 # Only defined for relative volumes but "relative" is replaced with "absolute" when actually loading the data, but only for the combined_vols files, not the gf files.
 # datadefs <- rbind(c(name="TSC1", gf="gf_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"))
 # datadefs <- rbind(c(name="TSC1", gf="gf_Tsai_40um_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"))
-datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1"))
+
+# testing 159 regions in combined vols 
+# datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1"))
+
+# testing multiple strain names
+datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1"),
+                  c(name="TSC1M", gf="gf", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1M"))
+
+# testing gf files where one contains Treatment and another one doesn't
+# datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1"),
+#                   c(name="TSC1M", gf="gf_notreatment", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1M"))
+
+# testing combined vols files with reordered columns
+# datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1"),
+#                   c(name="TSC1R", gf="gf", data="combined_vols_all_reordered",term="Genotype", G1="WT", G2="KO", group="TSC1R"))
+
+# testing combined vols files with a missing column
+# datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1"),
+#                   c(name="TSC1R", gf="gf", data="combined_vols_all_omitted",term="Genotype", G1="WT", G2="KO", group="TSC1R"))
+
+# testing combined vols files with a misspelled column
+# datadefs
+
 # datadefs <- rbind(c(name="TSC1", gf="gf_Tsai_40um_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"), c(name="ITGB3", gf="gf_ITGB3", data="combined_vols_ITGB3",term="Genotype", G1="WT", G2="KO", group="ITGB3"))
+
 datadefs <- as.data.frame(datadefs, stringsAsFactors=FALSE)
 
 
 # Loading Data ------------------------------------------------------------
 
 GfMetadata <- function(gfFiles) {
-  # Returns a named vector containing all metadata fields that are used in the app (in any of the gf files).
+  # Returns a named vector containing metadata fields that are used in AT LEAST ONE of the gf files in the app.
   
   gfMetadata = c("Treatment"=FALSE, "Sex"=FALSE, "Background"=FALSE, "FactorAge"=FALSE, "RawAge"=FALSE)
   for (file in gfFiles) {
@@ -78,7 +101,7 @@ IndividualData <- function(datadefs, volumeType) {
   # <app dir>/data/ is the base path for data
   basePath = paste(getwd(), '/data/', sep='')
   
-  # Get example combined vols file.  Tries the first row of datadefs.
+  # Get example combined vols file from first row of the datadefs data frame.
   absoluteFile = paste(basePath, datadefs$data[1], '_absolute.txt', sep='')
   relativeFile = paste(basePath, datadefs$data[1], '_relative.txt', sep='')
   if (file.exists(absoluteFile)) {
@@ -86,19 +109,21 @@ IndividualData <- function(datadefs, volumeType) {
   } else if (file.exists(relativeFile)) {
     combinedVolsDf = read.table(relativeFile, check.names=FALSE)
   } else {
-    stop(paste('Error:', absoluteFile, 'and', relativeFile, 'do not exist'))
+    # This isn't the best way of handling the error, but at least it gives the user some clue as to why the app failed.
+    stop(paste(absoluteFile, 'and', relativeFile, 'do not exist.  Check that datadefs is specified properly in helpers.R.'))
   }
   
   # Find metadata columns that were specified in the gf files.
   gfMetadata = GfMetadata(datadefs$gf)
   gfMetadataTrue = which(gfMetadata)
-  count = length(gfMetadataTrue)
+  numMetadataFactors = length(gfMetadataTrue)
   
   dirtyColNames = colnames(combinedVolsDf)
   formattedColNames = sapply(dirtyColNames, SimpleCap)
+  numBrainRegions = length(formattedColNames)
 
-  # create individualData data table to store all the data
-  individualData = data.table(matrix(ncol = 2 + count + dim(combinedVolsDf)[2]))
+  # Create individualData data table to store data for each mouse on each brain region.
+  individualData = data.table(matrix(ncol = 2 + numMetadataFactors + numBrainRegions))
   individualData = individualData[-1, ]  # remove NAs from initialization
   colLabels = c(formattedColNames, "Strain", "Genotype", names(gfMetadataTrue))
   setnames(individualData, colLabels)
@@ -116,24 +141,25 @@ IndividualData <- function(datadefs, volumeType) {
       tempData = as.data.table(tempData)
       gfFile = get(row$gf)
        
-      # Check that the combined vols column names are the same as those used previously.  This needs to be tested.
+      # Check that the combined vols column names are the same as those used previously.
       if (!all(colnames(tempData)==dirtyColNames)) {
         stop('All your combined vols files must have identical column names and be in the same order.')
       }
 
       # Set proper column names.  Look up names from a dictionary (named vector).
       setnames(tempData, formattedColNames)
-      tempData$Strain = row$name
-      tempData$Genotype = gfFile$Genotype
+      tempData[, Strain:=row$name]  # Fast version of tempData$Strain = row$name OR tempData[, "Strain"] = row$name
+      tempData[, Genotype:=gfFile$Genotype]
 
       # Get optional column names (Treatment, RawAge, FactorAge, Sex, Background).
-      for (i in 1:length(gfMetadataTrue)) {
-        tryCatch({
-          tempData[, names(gfMetadataTrue)[i]] = get(names(gfMetadataTrue[i]), gfFile)
-        }, error = function(err) {
+      tryCatch({  # Computationally expensive
+        for (i in 1:length(gfMetadataTrue)) {
+          metadataColumn = names(gfMetadataTrue)[i]
+          tempData[, metadataColumn] = get(metadataColumn, gfFile)
+        }
+      }, error = function(err) {
         
-        })
-      }
+      })
 
       # Append data to total dataset.
       individualData = rbindlist(list(individualData, tempData), use.names=TRUE, fill=TRUE)
@@ -155,7 +181,8 @@ IndividualData <- function(datadefs, volumeType) {
 
 StatsSummaryTable <- function(df1, df2) {
   # Summary:
-  #   Takes two data frames, each representing a group of mice.  Computes descriptive stats (Mean, SD) for each group along with statistical tests comparing the groups (t-test, Cohen's d, etc.).
+  #   Takes two data frames, each representing a group of mice.  
+  #   Computes descriptive stats (Mean, SD) for each group along with statistical tests comparing the groups (t-test, Cohen's d, etc.).
 
   means1 = with(df1, tapply(Volume, Region, mean))
   sds1 = with(df1, tapply(Volume, Region, sd))
@@ -198,6 +225,7 @@ CalculateStats <- function(df1, df2) {
 ttesthelper <- function(x) {
   t.test(x[,'Volume'] ~ x[,'Group'])$p.value
 }
+
 
 # Quality Assurance -------------------------------------------------------
 

@@ -352,7 +352,7 @@ shinyServer(
 
     output$regionsToPlot = renderUI({
 
-        data = isolate(finalDataSource1())
+        data = isolate(activeData())
 
         column(4, selectInput(inputId='regionsToPlot',
                               label=h4('Regions to Plot:'),
@@ -361,17 +361,31 @@ shinyServer(
                               multiple = TRUE))
     })
 
+    output$strainsToPlot = renderUI({
+
+        data = isolate(activeData())
+
+        column(4, selectInput(inputId='strainsToPlot',
+                              label=h4('Strains to Plot:'),
+                              choices=as.character(unique(data$Strain)),
+                              selected = NULL,
+                              multiple = TRUE))
+    })
+
     output$meansPlot = renderPlot({
 
         # selectedRegions = summaryTable()[input$interactiveTable_rows_selected,]$Region
         selectedRegions = input$regionsToPlot
+        selectedStrains = input$strainsToPlot
+        fullData = activeData()
 
-        if (length(selectedRegions) != 0) {
-            fullData = rbind.fill(finalFilteredDataSource1(), finalFilteredDataSource2())
+        if ((length(selectedRegions) != 0) && (length(selectedStrains) != 0)) {
+            # fullData = rbind.fill(finalFilteredDataSource1(), finalFilteredDataSource2())
             fullData = filter(fullData, Region %in% selectedRegions)
+            fullData = filter(fullData, Strain %in% selectedStrains)
 
     #         meansPlot = ggplot(data=meansData, aes(x=name, y=volume, fill=genotype, colour=genotype))
-            meansPlot = ggplot(data=fullData, aes(x=Region, y=Volume, fill=Group, colour=Group))
+            meansPlot = ggplot(data=fullData, aes(x=Genotype, y=Volume, fill=Treatment, colour=Treatment))
 
             if (input$plotType == 1) {
                 dodge = position_dodge(width=0.9)
@@ -410,15 +424,17 @@ shinyServer(
 
             # customize theme aspects of the plot
             meansPlot = (meansPlot
-                        + facet_wrap( ~ Region, scales='free')
+                        + facet_grid(Region ~ Strain, scales='free')
+                        # + facet_wrap( ~ Region, scales='free')
                          # + theme(plot.title = element_text(color='#000000', face='bold', family='Trebuchet MS', size=24))
                          # + theme(axis.title = element_text(color='#000000', face='bold', family='Trebuchet MS', size=16))
                         + theme(axis.title.y = element_text(color='#000000', family='Trebuchet MS', size=16, angle=90))
                         + theme(axis.text.y = element_text(color='#000000', family='Trebuchet MS', size=14))
-                        + theme(axis.title.x = element_blank())
+                        + theme(axis.title.x = element_text(color='#000000', family='Trebuchet MS', size=16))
+                        + theme(axis.text.x = element_text(color='#000000', family='Trebuchet MS', size=14))
+                        # + theme(axis.title.x = element_blank())
                          # + theme(axis.text.x = element_text(color='#000000', family='Trebuchet MS', size=16))
-                        + theme(axis.text.x = element_blank())
-
+                        # + theme(axis.text.x = element_blank())
                         + theme(strip.text = element_text(size=16))
                          # + theme(strip.text = element_blank())
                         + theme(legend.title = element_blank())
@@ -426,6 +442,6 @@ shinyServer(
             
             meansPlot
         }
-    })
+    }, height=exprToFunction(length(input$regionsToPlot)*350))
   }
 )
