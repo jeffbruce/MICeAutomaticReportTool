@@ -416,9 +416,9 @@ shinyServer(
 
             # Change y axis label to correct label for absolute or relative volume.
             if (tolower(input$volumeType) == 'absolute') {
-                meansPlot = meansPlot + labs(x='strain', y=bquote(Volume~(mm^{3})))
+                meansPlot = meansPlot + labs(x='Genotype', y=bquote(Volume~(mm^{3})))
             } else {
-                meansPlot = meansPlot + labs(x='strain', y='Relative Volume (%)')
+                meansPlot = meansPlot + labs(x='Genotype', y='Relative Volume (%)')
             }
 
             # customize theme aspects of the plot

@@ -12,12 +12,12 @@
 #                   c(name="TSC1M", gf="gf", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1M"))
 
 # testing gf files where one contains Treatment and another one doesn't
-# datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1"),
-#                   c(name="TSC1M", gf="gf_notreatment", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1M"))
+datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1"),
+                  c(name="TSC1M", gf="gf_notreatment", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1M"))
 
 # testing gf files where both do not contain Treatment
-datadefs <- rbind(c(name="TSC1", gf="gf_notreatment", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1"),
-                  c(name="TSC1M", gf="gf_notreatment", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1M"))
+# datadefs <- rbind(c(name="TSC1", gf="gf_notreatment", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1"),
+#                   c(name="TSC1M", gf="gf_notreatment", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1M"))
 
 # testing combined vols files with reordered columns
 # datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1"),
