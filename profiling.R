@@ -1,4 +1,5 @@
 # Useful resource: http://adv-r.had.co.nz/Profiling.html
+# Useful resource about data.tables: http://www.milanor.net/blog/?p=286
 
 library(lineprof)
 library(shiny)

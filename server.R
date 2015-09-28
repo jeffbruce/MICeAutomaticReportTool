@@ -411,16 +411,12 @@ shinyServer(
     #                        + stat_summary(fun.y=mean, position=position_dodge(width=1.0), shape=1, col='red', geom='point'))
             }
 
-    #         meansPlot = (meansPlot
-    #                     + geom_point(position=position_jitterdodge(dodge.width=0.9))
-    #                     + geom_boxplot(fill='white', position=position_dodge(width=0.9), alpha=0.5, outlier.size=0)
-    #                     + stat_summary(fun.y=mean, position=position_dodge(width=0.9), shape=3, col='red', geom='point'))
-
-    #         #         if (tolower(input$volumeType) == 'absolute') {  # absolute volumes
-    # #           meansPlot = meansPlot + labs(x='strain', y=bquote(Volume~(mm^{3})))
-    # #         } else {  # relative volumes
-    # #           meansPlot = meansPlot + labs(x='strain', y='Relative Volume (%)')
-    # #         }
+            # Change y axis label to correct label for absolute or relative volume.
+            if (tolower(input$volumeType) == 'absolute') {
+                meansPlot = meansPlot + labs(x='strain', y=bquote(Volume~(mm^{3})))
+            } else {
+                meansPlot = meansPlot + labs(x='strain', y='Relative Volume (%)')
+            }
 
             # customize theme aspects of the plot
             meansPlot = (meansPlot
@@ -428,10 +424,12 @@ shinyServer(
                         # + facet_wrap( ~ Region, scales='free')
                          # + theme(plot.title = element_text(color='#000000', face='bold', family='Trebuchet MS', size=24))
                          # + theme(axis.title = element_text(color='#000000', face='bold', family='Trebuchet MS', size=16))
-                        + theme(axis.title.y = element_text(color='#000000', family='Trebuchet MS', size=16, angle=90))
+                        + theme(axis.title.y = element_text(color='#000000', family='Trebuchet MS', face='bold', size=16, angle=90))
                         + theme(axis.text.y = element_text(color='#000000', family='Trebuchet MS', size=14))
-                        + theme(axis.title.x = element_text(color='#000000', family='Trebuchet MS', size=16))
+                        + theme(axis.title.x = element_text(color='#000000', family='Trebuchet MS', face='bold', size=16))
                         + theme(axis.text.x = element_text(color='#000000', family='Trebuchet MS', size=14))
+                        + theme(strip.text.x = element_text(color='#000000', family='Trebuchet MS', face='bold', size=14))
+                        + theme(strip.text.y = element_text(color='#000000', family='Trebuchet MS', face='bold', size=14, angle=90))
                         # + theme(axis.title.x = element_blank())
                          # + theme(axis.text.x = element_text(color='#000000', family='Trebuchet MS', size=16))
                         # + theme(axis.text.x = element_blank())

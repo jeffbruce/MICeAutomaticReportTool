@@ -1,32 +1,36 @@
 # Data Specification ---------------------------------------
 
 # Only defined for relative volumes but "relative" is replaced with "absolute" when actually loading the data, but only for the combined_vols files, not the gf files.
-# datadefs <- rbind(c(name="TSC1", gf="gf_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"))
-# datadefs <- rbind(c(name="TSC1", gf="gf_Tsai_40um_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"))
+# datadefs <- rbind(c(name="TSC1", gf="gf_test", data="combined_vols_Tsai_40um", term="Genotype", G1="WT", G2="KO", group="TSC1"))
+# datadefs <- rbind(c(name="TSC1", gf="gf_Tsai_40um_test", data="combined_vols_Tsai_40um", term="Genotype", G1="WT", G2="KO", group="TSC1"))
 
 # testing 159 regions in combined vols 
-# datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1"))
+# datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1"))
 
 # testing multiple strain names
-datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1"),
-                  c(name="TSC1M", gf="gf", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1M"))
+# datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1"),
+#                   c(name="TSC1M", gf="gf", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1M"))
 
 # testing gf files where one contains Treatment and another one doesn't
-# datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1"),
-#                   c(name="TSC1M", gf="gf_notreatment", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1M"))
+datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1"),
+                  c(name="TSC1M", gf="gf_notreatment", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1M"))
+
+# testing gf files where both do not contain Treatment
+# datadefs <- rbind(c(name="TSC1", gf="gf_notreatment", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1"),
+#                   c(name="TSC1M", gf="gf_notreatment", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1M"))
 
 # testing combined vols files with reordered columns
-# datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1"),
-#                   c(name="TSC1R", gf="gf", data="combined_vols_all_reordered",term="Genotype", G1="WT", G2="KO", group="TSC1R"))
+# datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1"),
+#                   c(name="TSC1R", gf="gf", data="combined_vols_all_reordered", term="Genotype", G1="WT", G2="KO", group="TSC1R"))
 
 # testing combined vols files with a missing column
-# datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all",term="Genotype", G1="WT", G2="KO", group="TSC1"),
-#                   c(name="TSC1R", gf="gf", data="combined_vols_all_omitted",term="Genotype", G1="WT", G2="KO", group="TSC1R"))
+# datadefs <- rbind(c(name="TSC1", gf="gf", data="combined_vols_all", term="Genotype", G1="WT", G2="KO", group="TSC1"),
+#                   c(name="TSC1R", gf="gf", data="combined_vols_all_omitted", term="Genotype", G1="WT", G2="KO", group="TSC1R"))
 
 # testing combined vols files with a misspelled column
 # datadefs
 
-# datadefs <- rbind(c(name="TSC1", gf="gf_Tsai_40um_test", data="combined_vols_Tsai_40um",term="Genotype", G1="WT", G2="KO", group="TSC1"), c(name="ITGB3", gf="gf_ITGB3", data="combined_vols_ITGB3",term="Genotype", G1="WT", G2="KO", group="ITGB3"))
+# datadefs <- rbind(c(name="TSC1", gf="gf_Tsai_40um_test", data="combined_vols_Tsai_40um", term="Genotype", G1="WT", G2="KO", group="TSC1"), c(name="ITGB3", gf="gf_ITGB3", data="combined_vols_ITGB3", term="Genotype", G1="WT", G2="KO", group="ITGB3"))
 
 datadefs <- as.data.frame(datadefs, stringsAsFactors=FALSE)
 
@@ -127,7 +131,7 @@ IndividualData <- function(datadefs, volumeType) {
   individualData = individualData[-1, ]  # remove NAs from initialization
   colLabels = c(formattedColNames, "Strain", "Genotype", names(gfMetadataTrue))
   setnames(individualData, colLabels)
-  
+
   # Loop through the gf files that need to be processed and extract the data.
   for (i in 1:nrow(datadefs)) {
 
@@ -152,10 +156,15 @@ IndividualData <- function(datadefs, volumeType) {
       tempData[, Genotype:=gfFile$Genotype]
 
       # Get optional column names (Treatment, RawAge, FactorAge, Sex, Background).
+      # If gfFile does not contain that column, fill it with NA values.
       tryCatch({  # Computationally expensive
         for (i in 1:length(gfMetadataTrue)) {
           metadataColumn = names(gfMetadataTrue)[i]
-          tempData[, metadataColumn] = get(metadataColumn, gfFile)
+          if (metadataColumn %in% colnames(gfFile)) {
+            tempData[, metadataColumn] = get(metadataColumn, gfFile)
+          } else {
+            tempData[, metadataColumn] = NA
+          }
         }
       }, error = function(err) {
         
@@ -173,7 +182,7 @@ IndividualData <- function(datadefs, volumeType) {
   individualData$Region = as.factor(individualData$Region)
   individualData$Strain = as.factor(individualData$Strain)
   
-  individualData = na.omit(individualData)
+  # individualData = na.omit(individualData)
 
   return(individualData)
 }
