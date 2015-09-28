@@ -384,8 +384,11 @@ shinyServer(
             fullData = filter(fullData, Region %in% selectedRegions)
             fullData = filter(fullData, Strain %in% selectedStrains)
 
-    #         meansPlot = ggplot(data=meansData, aes(x=name, y=volume, fill=genotype, colour=genotype))
-            meansPlot = ggplot(data=fullData, aes(x=Genotype, y=Volume, fill=Treatment, colour=Treatment))
+            if ('Treatment' %in% colnames(fullData)) {
+                meansPlot = ggplot(data=fullData, aes(x=Genotype, y=Volume, fill=Treatment, colour=Treatment))
+            } else {
+                meansPlot = ggplot(data=fullData, aes(x=Genotype, y=Volume, fill=Genotype, colour=Genotype))
+            }
 
             if (input$plotType == 1) {
                 dodge = position_dodge(width=0.9)
