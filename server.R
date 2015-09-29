@@ -232,6 +232,8 @@ shinyServer(function(input, output, session) {
         }
     })
 
+    ### FactorAge Stuff
+    
     # output$ageGroups1 = renderUI({
 
     #     data = finalDataSource1()
@@ -415,6 +417,14 @@ shinyServer(function(input, output, session) {
     #     # },
     #     # contentType = 'application/pdf'
     # )
+
+    # Refactor this at some point to save the sorted interactive table.
+    output$downloadTable = downloadHandler(
+        filename = 'table.csv',
+        content = function(file) {
+            write.csv(summaryTable(), file)
+        }
+    )
 
     # Works!
     output$downloadPlot = downloadHandler(

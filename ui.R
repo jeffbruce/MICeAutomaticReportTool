@@ -148,11 +148,11 @@ shinyUI(
 
         mainPanel(
 
-          # fluidRow(
-          #   downloadButton('downloadTable', 'Download Table')
-          # ),
+          fluidRow(
+            downloadButton('downloadTable', 'Download Table')
+          ),
 
-          # br(),
+          br(),
 
           # requires shiny >= 0.12.0, need to use packrat package for this project
           fluidRow(
@@ -173,10 +173,6 @@ shinyUI(
             column(12, plotOutput(outputId='meansPlot'))
           )
         )
-
-          # hr(),
-
-          # fluidRow(column(12, plotOutput(outputId='interactiveTablePlot')))
       
       )
     )
