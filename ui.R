@@ -148,12 +148,28 @@ shinyUI(
 
         mainPanel(
 
+          # fluidRow(
+          #   downloadButton('downloadTable', 'Download Table')
+          # ),
+
+          # br(),
+
           # requires shiny >= 0.12.0, need to use packrat package for this project
           fluidRow(
             column(12, dataTableOutput(outputId='interactiveTable'))
           ),
 
+          br(),
+
           fluidRow(
+            column(4, downloadButton(outputId='downloadPlot', label='Download Plot')),
+            column(4, radioButtons(inputId='imageType', label=h4('Image Type:'), choices=list('pdf', 'png'), selected='pdf'))
+          ),
+
+          br(),
+
+          fluidRow(
+            # column(12, plotOutput(outputId='meansPlot'))
             column(12, plotOutput(outputId='meansPlot'))
           )
         )

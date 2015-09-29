@@ -2,8 +2,7 @@
 
 # Shared data/libraries are declared in global.R instead of here because ui.R needs access to them.
 
-shinyServer(
-  function(input, output, session) {
+shinyServer(function(input, output, session) {
 
 # Code in shinyServer runs for each user, every time they refresh their browser.
 
@@ -372,7 +371,84 @@ shinyServer(
                               multiple = TRUE))
     })
 
-    output$meansPlot = renderPlot({
+    # selectedMetadataLevels = reactive({
+
+    #     gfMetadata = GfMetadata(datadefs$gf)
+    #     gfMetadataTrue = which(gfMetadata)
+
+    #     names(data) = gfMetadataTrue
+
+    #     if (!(input$ageGroups1 == NULL)) {
+    #         gf
+    #     }
+
+    # })
+
+    # Couldn't get downloadHandler to work using this method.
+    # output$downloadPlot <- downloadHandler(
+    #     # filename = function() {
+    #     #     # strains = paste(isolate(input$strainsToPlot), collapse='_')
+    #     #     # regions = paste(isolate(input$regionsToPlot), collapse='_')
+    #     #     # name = paste(strains, regions, sep=' ')
+    #     #     # name = paste(name, isolate(input$imageType), sep='.')
+    #     #     # name
+    #     #     'plot.png'
+    #     # },
+    #     filename = "Shinyplot.pdf",
+    #     # filename = "Shinyplot.png",
+    #     content = function(file) {
+    #         # if (input$imageType == 'pdf') {
+    #         #     pdf(file)
+    #         # } else {
+    #         #     png(file)
+    #         # }
+    #         # pdf(file)
+    #         CairoPDF(file)  # Prints out a white canvas.
+    #         # png(file)
+    #         # CairoPNG(file)  # Prints out a black square.
+    #         # y = makePlot()  # This just prints out code and doesn't help.
+    #         # print(y)
+    #         makePlot()
+    #         dev.off()
+    #     }
+    #     # This doesn't help anything.
+    #     # },
+    #     # contentType = 'application/pdf'
+    # )
+
+    # Works!
+    output$downloadPlot = downloadHandler(
+        filename = function() {
+            regions = paste(input$regionsToPlot, collapse=' & ')
+            strains = paste(input$strainsToPlot, collapse=' & ')
+            name = paste(strains, regions, sep=' - ')
+            name = paste(name, input$imageType, sep='.')
+            name
+        },
+        content = function(file) {
+            # Can't do this because makePlot() is not a ggplot, but is a renderPlot.
+            # ggsave(file, plot = makePlot(), device=pdf)
+            # Not allowed to do this because you can't read from Shiny output objects.
+            # ggsave(file, plot = output$meansPlot, device=pdf)
+            
+            # This works!  thePlot() is a reactive expression and yet it still works.
+            # The file name cannot exist in the base folder of the app otherwise it will copy the wrong plot.
+            regions = paste(input$regionsToPlot, collapse=' & ')
+            strains = paste(input$strainsToPlot, collapse=' & ')
+            name = paste(strains, regions, sep=' - ')
+            name = paste(name, input$imageType, sep='.')
+            ggsave(file, plot=thePlot(), height=length(input$regionsToPlot)*4, width=length(input$strainsToPlot)*4.5)
+            file.copy(paste(name), file, overwrite=TRUE)
+        }
+    )
+
+    makePlot = function() {
+        renderPlot({
+            thePlot()
+        }, height=exprToFunction(length(input$regionsToPlot)*350))
+    }
+
+    thePlot = reactive({
 
         # selectedRegions = summaryTable()[input$interactiveTable_rows_selected,]$Region
         selectedRegions = input$regionsToPlot
@@ -395,7 +471,6 @@ shinyServer(
                 meansPlot = (meansPlot
                             + stat_summary(fun.y=mean, position=position_dodge(width=1), geom='bar')
                             + stat_summary(fun.data=mean_cl_normal, position=position_dodge(width=1), geom='errorbar', color='black', size=0.5, width=0.5))
-    #                        + scale_y_continuous(limits=c(min(meansData$volume), max(meansData$volume)))
             } else if (input$plotType == 2) {
                 meansPlot = (meansPlot
                             + geom_point(position=position_jitterdodge(dodge.width=0.9))
@@ -406,12 +481,9 @@ shinyServer(
                             + geom_point(position=position_jitterdodge(dodge.width=0.9))
                             + geom_violin(fill='white', position=position_dodge(width=0.9), alpha=0.5))
             } else if (input$plotType == 4) {
-                # means = tapply(meansData$volume, meansData$genotype, mean)
-                # sds = tapply(meansData$volume, meansData$genotype, sd)
                 meansPlot = (meansPlot
                             + geom_point(position=position_jitterdodge(dodge=1.0))
                             + stat_summary(fun.data=mean_cl_normal, position=position_dodge(width=1.0), geom='errorbar', color='black', size=0.5, width=0.5))
-    #                        + stat_summary(fun.y=mean, position=position_dodge(width=1.0), shape=1, col='red', geom='point'))
             }
 
             # Change y axis label to correct label for absolute or relative volume.
@@ -425,24 +497,34 @@ shinyServer(
             meansPlot = (meansPlot
                         + facet_grid(Region ~ Strain, scales='free')
                         # + facet_wrap( ~ Region, scales='free')
-                         # + theme(plot.title = element_text(color='#000000', face='bold', family='Trebuchet MS', size=24))
-                         # + theme(axis.title = element_text(color='#000000', face='bold', family='Trebuchet MS', size=16))
-                        + theme(axis.title.y = element_text(color='#000000', family='Trebuchet MS', face='bold', size=16, angle=90))
-                        + theme(axis.text.y = element_text(color='#000000', family='Trebuchet MS', size=14))
-                        + theme(axis.title.x = element_text(color='#000000', family='Trebuchet MS', face='bold', size=16))
-                        + theme(axis.text.x = element_text(color='#000000', family='Trebuchet MS', size=14))
-                        + theme(strip.text.x = element_text(color='#000000', family='Trebuchet MS', face='bold', size=14))
-                        + theme(strip.text.y = element_text(color='#000000', family='Trebuchet MS', face='bold', size=14, angle=90))
+                        # + theme(plot.title = element_text(color='#000000', face='bold', family='Trebuchet MS', size=24))
+                        # + theme(axis.title = element_text(color='#000000', face='bold', family='Trebuchet MS', size=16))
+                        + theme(axis.title.y = element_text(color='#000000', face='bold', size=16, angle=90))
+                        + theme(axis.text.y = element_text(color='#000000', size=14))
+                        + theme(axis.title.x = element_text(color='#000000', face='bold', size=16))
+                        + theme(axis.text.x = element_text(color='#000000', size=14))
+                        + theme(strip.text.x = element_text(color='#000000', face='bold', size=14))
+                        + theme(strip.text.y = element_text(color='#000000', face='bold', size=14, angle=90))
                         # + theme(axis.title.x = element_blank())
-                         # + theme(axis.text.x = element_text(color='#000000', family='Trebuchet MS', size=16))
+                        # + theme(axis.text.x = element_text(color='#000000', family='Trebuchet MS', size=16))
                         # + theme(axis.text.x = element_blank())
                         + theme(strip.text = element_text(size=16))
-                         # + theme(strip.text = element_blank())
-                        + theme(legend.title = element_blank())
+                        # + theme(strip.text = element_blank())
+                        # + theme(legend.title = element_blank())
+                        + theme(legend.title = element_text(size=14, face='bold'))
                         + theme(legend.text = element_text(size=14)))
-            
+                
+            # ggplot_build I believe is only needed for ggsave if you are passing in a grobs object and not a ggplot. 
+            # g = ggplot_build(meansPlot)
+            # This in combination with the second output$downloadHandler method works but then it doesn't plot the actual plot.
+            # ggsave(filename='plot.pdf', plot=meansPlot, device=pdf)
+            # dev.off()
+
             meansPlot
         }
-    }, height=exprToFunction(length(input$regionsToPlot)*350))
-  }
-)
+    })
+    
+    # This must be defined after makePlot() is defined!
+    output$meansPlot = makePlot()
+
+})
